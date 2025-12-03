@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>간단한 OCR 테스트</title>
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        #result, #status {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+            white-space: pre-wrap; /* 줄바꿈과 공백을 그대로 표시 */
+        }
+        #status { color: #555; }
+    </style>
+</head>
+<body>
+
+    <h2>간단한 이미지 OCR (Tesseract.js)</h2>
+    <p>텍스트가 포함된 이미지 파일(PNG, JPG 등)을 선택하세요.</p>
+
+    <input type="file" id="uploader" accept="image/*" />
+    
+    <button id="recognizeBtn">텍스트 추출하기</button>
+
+    <div id="status">준비 중...</div>
+
+    <h3>추출된 텍스트:</h3>
+    <pre id="result">아직 추출된 내용이 없습니다.</pre>
+
+    <script>
+        const uploader = document.getElementById('uploader');
+        const recognizeBtn = document.getElementById('recognizeBtn');
+        const statusEl = document.getElementById('status');
+        const resultEl = document.getElementById('result');
+
+        recognizeBtn.addEventListener('click', () => {
+            const file = uploader.files[0];
+            if (!file) {
+                statusEl.textContent = '파일을 먼저 선택해주세요.';
+                return;
+            }
+
+            statusEl.textContent = '텍스트를 인식하는 중... (파일 크기에 따라 시간이 걸릴 수 있습니다)';
+            resultEl.textContent = '...';
+
+            // Tesseract.js 실행
+            Tesseract.recognize(
+                file,
+                'eng+kor', // 영어(eng)와 한국어(kor) 인식
+                {
+                    logger: m => {
+                        console.log(m); // 진행 상황을 콘솔에 출력
+                        if (m.status === 'recognizing text') {
+                            statusEl.textContent = `인식 중... (${Math.round(m.progress * 100)}%)`;
+                        }
+                    }
+                }
+            ).then(({ data: { text } }) => {
+                // OCR 완료
+                statusEl.textContent = '인식 완료!';
+                resultEl.textContent = text;
+            }).catch(err => {
+                console.error(err);
+                statusEl.textContent = '오류가 발생했습니다.';
+                resultEl.textContent = '';
+            });
+        });
+    </script>
+
+</body>
+</html>
